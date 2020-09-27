@@ -1,6 +1,3 @@
-# Swaps de Tasa de Interés
-Material para la nuev versión del curso Swaps Tasa de Interés.
-=======
 # MIF 2020
 Material del curso Derivados de Renta Fija impartido el 2020 en el Master de Ingeniería Financiera de la UAI.
 
