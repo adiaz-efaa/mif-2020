@@ -58,7 +58,7 @@ class BusCal(Enum):
     NY = 1
     SCL = 2
 
-
+    
 def get_cal(code: BusCal) -> Qcf.BusinessCalendar:
     """
     """
