@@ -36,13 +36,17 @@ def show_leg(leg, leg_type:str, leg_subtype: str = '') -> pd.DataFrame:
 
 
 def get_curve_from_dataframe(yf: Qcf.QCYearFraction, wf: Qcf.QCWealthFactor,
-                             df_curva: pd.DataFrame) -> Qcf.ZeroCouponCurve:
+                             df_curva: pd.DataFrame, is_plazos_yf_float: bool = False) -> Qcf.ZeroCouponCurve:
     """
     Retorna un objeto Qcf.ZeroCouponCurve. Esta función requiere que `df_curva` tenga una columna
     de nombre 'plazo' y una columna de nombre 'tasa'. Se usa interpolación lineal en la curva que
     se retorna.
     """
-    plazos = Qcf.long_vec()
+    if is_plazos_yf_float:
+        plazos = Qcf.double_vec()
+    else:
+        plazos = Qcf.long_vec()
+    
     tasas = Qcf.double_vec()
     for row in df_curva.itertuples():
         plazos.append(row.plazo)
