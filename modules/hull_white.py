@@ -1,8 +1,10 @@
 """
 Contiene funciones relacionadas con el modelo de Hull-White en tiempo continuo.
 """
+
 from scipy.interpolate import interp1d
 import numpy as np
+import math
 
 
 def b_hw(gamma: float, t: float, T: float) -> float:
@@ -81,7 +83,7 @@ def zero_hw(r: float, gamma: float, sigma: float,
     return math.exp(a - b * r)
 
 
-def get_zrate_and_theta(plazos, tasas):
+def get_zrate_hwzero_and_theta(plazos, tasas, gamma, sigma):
     """
     Construye un interpolador por cubic spline para la curva cero cupón y la función theta del modelo de HW.
     
@@ -96,14 +98,16 @@ def get_zrate_and_theta(plazos, tasas):
     """
     # Esto es la curva cero cupón embedida en un interpolador diferenciable.
     # zrate(t: float) -> float. Para un plazo t calcula la tasa al plazo t (con el cubic spline).
-    zrate = interp1d(curva['t'],
-                  curva['rate'],
-                  kind='cubic', # <--- diferenciable (cubic spline)
-                  fill_value="extrapolate")
+    zrate = interp1d(
+        plazos,
+        tasas,
+        kind='cubic', # <--- diferenciable (cubic spline)
+        fill_value="extrapolate"
+    )
     
     def dzrate(t: float) -> float:
         delta = .0001
-        return (zcurva(t + delta) - zrate(t)) / delta
+        return (zrate(t + delta) - zrate(t)) / delta
 
     def d2zrate(t: float) -> float:
         delta = .0001
@@ -119,7 +123,10 @@ def get_zrate_and_theta(plazos, tasas):
         aux = (sigma ** 2) / (2.0 * gamma) * (1 - math.exp(-2.0 * gamma * t))
         return dfwd(t) + gamma * fwd(t) + aux
     
-    return zrate, theta
+    def hwz(r, t, T):
+        return zero_hw(r, gamma, sigma, zrate, fwd, t, T)
+    
+    return zrate, hwz, theta
 
 
 def sim_hw_many(gamma, sigma, theta, r0, num_sim, num_steps, seed = None):
@@ -139,8 +146,8 @@ def sim_hw_many(gamma, sigma, theta, r0, num_sim, num_steps, seed = None):
     
     return:
     
-    - una matriz (numpy.array), donde cada fila es una trayectoria y cada columna
-    es un paso de simulación.
+    - una `tuple` donde el primer elemento es un np.array con los tiempos de la simulación
+    y los elementos sucesivos son un np.array con cada una  de las trayectorias.
     """
     dt = 1 / 264.0
     num_steps += 1
@@ -151,7 +158,7 @@ def sim_hw_many(gamma, sigma, theta, r0, num_sim, num_steps, seed = None):
 
     for i in range(0, num_sim):
         for j in range(0, num_steps):
-            alea[i][j] = random.normal()
+            alea[i][j] = np.random.normal()
             
     # Calcula los valores de Theta. Theta sólo depende del tiempo, no de la simulación. 
     theta_array = np.zeros(num_steps)
