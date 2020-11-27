@@ -156,7 +156,7 @@ def sim_hw_many(gamma, sigma, theta, r0, num_sim, num_steps, seed = None):
     # Calcula los valores de Theta. Theta sólo depende del tiempo, no de la simulación. 
     theta_array = np.zeros(num_steps)
     tiempo = np.zeros(num_steps)
-    for i in range(0, num_steps):np.
+    for i in range(0, num_steps):
         tiempo[i] = i * dt
         theta_array[i] = theta(i * dt)
     
