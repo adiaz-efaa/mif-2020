@@ -94,7 +94,10 @@ def get_zrate_hwzero_and_theta(plazos, tasas, gamma, sigma):
     
     return:
     
-    - una `tuple` cuyo primer elemento es el cubic spline y cuyo segundo elemento es la función theta.
+    - una `tuple` cuyos elementos son:
+      - el cubic spline
+      - la función `hw_zero` con los parámetros gamma y sigma en closure
+      - la función theta.
     """
     # Esto es la curva cero cupón embedida en un interpolador diferenciable.
     # zrate(t: float) -> float. Para un plazo t calcula la tasa al plazo t (con el cubic spline).
