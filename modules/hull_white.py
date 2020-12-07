@@ -85,12 +85,12 @@ def zero_hw(r: float, gamma: float, sigma: float,
 
 def get_zrate_hwzero_and_theta(plazos, tasas, gamma, sigma):
     """
-    Construye un interpolador por cubic spline para la curva cero cupón y la función theta del modelo de HW.
+    Construye un interpolador por cubic spline para la curva cero cupón, la función del modelo de HW que permite calcular precios de bonos cupón cero y la función theta del modelo de HW.
     
     params:
     
-    - plazos: iterable con los plazos de la curva en convención yf Act/365
-    - tasas: iterable con las tasas de la curva en convención expAct/365
+    - plazos: iterable con los plazos de la curva en fracción de año en convención Act/365.
+    - tasas: iterable con las tasas de la curva en convención exp Act/365.
     
     return:
     
