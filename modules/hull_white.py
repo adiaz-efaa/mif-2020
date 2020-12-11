@@ -3,6 +3,8 @@ Contiene funciones relacionadas con el modelo de Hull-White en tiempo continuo.
 """
 
 from scipy.interpolate import interp1d
+from scipy.stats import norm
+from enum import Enum
 import numpy as np
 import math
 
@@ -181,3 +183,61 @@ def sim_hw_many(gamma, sigma, theta, r0, num_sim, num_steps, seed = None):
             r = r + theta_array[j - 1] * dt - gamma_dt * r + sqdt_sigma * alea[i][j - 1]
             sim[i][j] = r
     return tiempo, sim
+
+
+def sz(to: float, tb: float, gamma: float, sigma: float) -> float:
+    """
+    Calcula el valor de la desviación estándar de los retornos logarítmicos en un período to de un bono cupón cero que vence en tb en el modelo HW.
+    
+    params:
+    
+    - to: intervalo de tiempo de los retornos, expresado en años.
+    - tb: plazo del bono cupón cero, expresado en años. tb debe ser mayor que to.
+    - gamma: parámetro gamma del modelo HW.
+    - sigma: parámetro sigma del modelo HW.
+    
+    return:
+    
+    - le desviación estándar.
+    
+    """
+    if tb <= to:
+        raise ValueError("Parameter t0 must be less than tb (to < tb).")
+    aux = math.sqrt(sigma**2 / (2 * gamma) * (1 - math.exp(-2.0 * gamma * to)))
+    return b_hw(gamma, to, tb) * aux
+
+
+class CallPut(Enum):
+    CALL = 1
+    PUT = 2
+
+
+def zcb_call_put(c_p: CallPut, strike: float, to: float, tb: float,
+             r0: float, zo: float, zb: float,
+             gamma: float, sigma: float) -> float:
+    """
+    Calcula el valor de una call o una put sobre un bono cero cupón en el modelo de HW.
+    
+    params:
+    
+    - c_p: indica si es la opción es Call o Put. Es un `enum` de tipo CallPut. Ejemplo, c_p = CallPut.CALL.
+    - strike: es el strike de la opción. Se ingresa como número. Un strike del 90% se ingresa como .9.
+    - r0: es la tasa corta al momento de valorizar la opción (t = 0).
+    - to: instante de tiempo en que vence la opción, expresado en años.
+    - tb: instante de tiempo en que vence el bono subyacente, expresado en años. Debe ser tb > to.
+    - zo: factor de descuento de mercado a tiempo t = 0 hasta to.
+    - zb: factor de descuento de mercado a tiempo t = 0 hasta tb.
+    - gamma: parámetro gamma del modelo HW.
+    - sigma: parámetro sigma del modelo HW.
+    
+    return:
+    
+    -  el valor de la opción.
+    """
+    if tb <= to:
+        raise ValueError("Parameter t0 must be less than tb (to < tb).")
+    s_z = sz(to, tb, gamma, sigma)
+    d1 = (math.log(zb / (zo * strike)) + .5 * s_z**2) / s_z
+    d2 = d1 - s_z
+    flag = 1 if c_p == CallPut.CALL else -1
+    return flag * ( zb * norm.cdf(flag * d1) - zo * strike * norm.cdf(flag * d2))
