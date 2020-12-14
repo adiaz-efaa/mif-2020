@@ -158,12 +158,8 @@ def sim_hw_many(gamma, sigma, theta, r0, num_sim, num_steps, seed = None):
     num_steps += 1
     
     # Calcula los números aleatorios
-    alea = np.zeros((num_sim, num_steps))
     np.random.seed(seed)
-
-    for i in range(0, num_sim):
-        for j in range(0, num_steps):
-            alea[i][j] = np.random.normal()
+    alea = np.random.randn(num_sim, num_steps)
             
     # Calcula los valores de Theta. Theta sólo depende del tiempo, no de la simulación. 
     theta_array = np.zeros(num_steps)
@@ -184,6 +180,59 @@ def sim_hw_many(gamma, sigma, theta, r0, num_sim, num_steps, seed = None):
             sim[i][j] = r
     return tiempo, sim
 
+
+def sim_hw_many_at(gamma, sigma, theta, r0, num_sim, num_steps, seed = None):
+    """
+    Simula trayectorias del modelo de HW con un paso de simulación diario dt = 1/264.
+    
+    params:
+    
+    - gamma: intensidad de reversión del modelo HW
+    - sigma: parámetro de volatilidad del modelo HW
+    - theta: función theta del modelo de HW
+    - r0: valor de la tasa corta a tiempo t = 0 (valor inicial de todas las trayectorias)
+    - num_sim: número de trayectorias a calcular
+    - num_steps: número de pasos de simulación de cada trayectoria. El horizonte final de cada trayectoria
+    está dado por num_steps * dt (donde dt=1/264).
+    - seed: semilla a usar en la simulación. Cuando es `None` la semilla es aleatoria.
+    
+    return:
+    
+    - una `tuple` donde el primer elemento es un np.array con los tiempos de la simulación
+    y los elementos sucesivos son un np.array con cada una  de las trayectorias.
+    """
+    dt = 1 / 264.0
+    num_steps += 1
+    
+    # Calcula los números aleatorios
+    alea = np.zeros((num_sim, 2 * num_steps))
+    np.random.seed(seed)
+
+    for i in range(0, num_sim):
+        for j in range(0, 2 * num_steps):
+            alea[i][j] = np.random.normal()
+            
+    # Calcula los valores de Theta. Theta sólo depende del tiempo, no de la simulación. 
+    theta_array = np.zeros(2 * num_steps)
+    tiempo = np.zeros(2 * num_steps)
+    for i in range(0, 2 * num_steps):
+        tiempo[i] = i * dt
+        theta_array[i] = theta(i * dt)
+    
+    # Simula las trayectorias
+    sqdt_sigma = math.sqrt(dt) * sigma
+    gamma_dt = gamma * dt
+    sim = np.zeros((2 * num_sim, 2 * num_steps))
+    for i in range(0, num_sim):
+        sim[2 * i][0] = r0
+        sim[2 * i + 1][0] = r0
+        r = r0
+        for j in range(1, 2 * num_steps):
+            r = r + theta_array[j - 1] * dt - gamma_dt * r + sqdt_sigma * alea[i][j - 1]
+            sim[2 * i][j] = r
+            r = r + theta_array[j - 1] * dt - gamma_dt * r - sqdt_sigma * alea[i][j - 1]
+            sim[2 * i + 1][j] = r
+    return tiempo, sim
 
 def sz(to: float, tb: float, gamma: float, sigma: float) -> float:
     """
